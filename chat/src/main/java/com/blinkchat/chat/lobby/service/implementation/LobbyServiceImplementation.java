@@ -1,5 +1,7 @@
 package com.blinkchat.chat.lobby.service.implementation;
 
+import com.blinkchat.chat.exception.MaxCapacityOfLobbyReachedException;
+import com.blinkchat.chat.exception.ResourceNotFoundException;
 import com.blinkchat.chat.lobby.dto.CreateLobbyResponse;
 import com.blinkchat.chat.lobby.dto.JoinLobbyRequest;
 import com.blinkchat.chat.lobby.dto.JoinLobbyResponse;
@@ -44,10 +46,10 @@ public class LobbyServiceImplementation implements LobbyService {
     }
 
     @Override
-    public CreateLobbyResponse createLobby(Integer expiryInHours, Integer lobbySize) {
+    public CreateLobbyResponse createLobby(Integer expiryInMins, Integer lobbySize) {
         Lobby lobby = new Lobby();
         lobby.setCreatedAt(LocalDateTime.now());
-        lobby.setExpiresAt(LocalDateTime.now().plusHours(expiryInHours));
+        lobby.setExpiresAt(LocalDateTime.now().plusMinutes(expiryInMins));
         lobby.setLobbySize(lobbySize);
         String uniqueLobbyId;
         do{
@@ -61,38 +63,44 @@ public class LobbyServiceImplementation implements LobbyService {
     @Override
 public JoinLobbyResponse joinLobby(JoinLobbyRequest body) {
 
-
+    //Extract info from body
     String lobbyId = body.getLobbyId();
     String sessionToken = body.getSessionToken();
-
+    //Find lobby by extracted info
     Lobby lobby = lobbyRepository.findByLobbyId(lobbyId);
 
-
+    //Lobby not found
     if (lobby == null) {
-        return null;
+        throw new ResourceNotFoundException("Lobby not found.");
     }
-
+    //Sessiontoken not found/empty -> new user
     if (sessionToken == null || sessionToken.isEmpty()) {
+        //If lobby is full send this response
         if (lobby.getCurrentUsers() >= lobby.getLobbySize()) {
-            return null;
+            throw new MaxCapacityOfLobbyReachedException("Lobby is full.");
         }
+        //Creat a new user
         lobby.setCurrentUsers(lobby.getCurrentUsers() + 1);
         lobbyRepository.save(lobby);
         return userService.createUser(lobby);
 
     }
 
-
+    //Find user with sessionToken
     User user = userRepository.findUserBySessionToken(sessionToken);
 
-
+    //User not found -> lobby deleted / User wants to join another lobby
     if (user == null || !user.getLobby().getLobbyId().equals(lobbyId)) {
+        //If new lobby full send this response
        if (lobby.getCurrentUsers() >= lobby.getLobbySize()) {
-            return null;
+            throw new MaxCapacityOfLobbyReachedException("Lobby is full.");
         }
-        return userService.createUser(lobby);
+       //Add user to lobby
+        lobby.setCurrentUsers(lobby.getCurrentUsers() + 1);
+         lobbyRepository.save(lobby);
+         return userService.createUser(lobby);
     }
-
+    //Same user rejoins the lobby simply add him to lobby
     return new JoinLobbyResponse(
             user.getAnonymousName(),
             user.getLobby().getLobbyId(),

@@ -61,7 +61,6 @@ public class UserServiceImplementation implements UserService {
         user.setSessionToken(generateSessionToken());
         user.setJoinedAt(java.time.LocalDateTime.now());
         user.setLobby(lobby);
-        lobby.setCurrentUsers(lobby.getCurrentUsers() + 1);
         userRepository.save(user);
         return new JoinLobbyResponse(user.getAnonymousName(), user.getLobby().getLobbyId(),user.getSessionToken());
     }

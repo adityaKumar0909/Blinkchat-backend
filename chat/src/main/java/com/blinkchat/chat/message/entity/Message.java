@@ -11,6 +11,7 @@ public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long messageId;
+    @Column(nullable = false, length = 500)
     private String content;
     private LocalDateTime createdAt;
     @ManyToOne

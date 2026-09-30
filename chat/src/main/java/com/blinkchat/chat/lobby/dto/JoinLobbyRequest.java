@@ -1,6 +1,11 @@
 package com.blinkchat.chat.lobby.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
 public class JoinLobbyRequest {
+    @NotBlank(message = "LobbyId cannot be blank")
+    @Pattern(regexp ="^[A-Z0-9]{6}$", message = "LobbyId must be 6 alphanumeric characters" )
     private String lobbyId;
     private String sessionToken;
 

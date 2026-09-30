@@ -2,6 +2,9 @@ package com.blinkchat.chat.lobby.entity;
 
 import com.blinkchat.chat.user.entity.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,6 +16,9 @@ public class Lobby {
     private Long id;
     @Column(unique = true , nullable=false, length=6)
     private String lobbyId;
+    @Column(nullable = false)
+    @Min(2)
+    @Max(20)
     private Integer lobbySize;
     @Column(nullable = false)
     private LocalDateTime createdAt;
